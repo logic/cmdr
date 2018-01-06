@@ -25,41 +25,41 @@ type Command interface {
 	Help() string
 }
 
-// CommandGlobal is our global flagset.
-var CommandGlobal = flag.NewFlagSet("_global", flag.ExitOnError)
+// Global is our global flagset.
+var Global = flag.NewFlagSet("_global", flag.ExitOnError)
 
-// SubCommands are all defined subcommands and their flagsets.
-var SubCommands = map[string]Command{}
+// Commands are all defined subcommands and their flagsets.
+var Commands = map[string]Command{}
 
-// GlobalHelp displays either a partial or full help text for our command
-// and subcommands.
-func GlobalHelp(full bool) {
+// Help displays either a partial or full help text for our command
+// and all subcommands.
+func Help(full bool) {
 	flag.Usage()
 
-	names := make([]string, len(SubCommands))
+	names := make([]string, len(Commands))
 	i := 0
-	for k := range SubCommands {
+	for k := range Commands {
 		names[i] = k
 		i++
 	}
 	sort.Strings(names)
 
-	CommandGlobal.PrintDefaults()
+	Global.PrintDefaults()
 
 	fmt.Println("\nSubcommands:")
 	for _, name := range names {
 		if full {
-			fmt.Printf("\n%s - %s\n", name, SubCommands[name].Help())
-			SubCommands[name].FlagSet().PrintDefaults()
+			fmt.Printf("\n%s - %s\n", name, Commands[name].Help())
+			Commands[name].FlagSet().PrintDefaults()
 		} else {
-			fmt.Printf("  %-10s %s\n", name, SubCommands[name].Help())
+			fmt.Printf("  %-10s %s\n", name, Commands[name].Help())
 		}
 	}
 
-	if len(EnvVars) != 0 {
+	if len(Variables) != 0 {
 		fmt.Println("\nValid environment variables:")
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
-		for name, action := range EnvVars {
+		for name, action := range Variables {
 			fmt.Fprintf(w, "  %s\t%s\t\n", name, action.Help())
 		}
 		w.Flush()
@@ -72,25 +72,25 @@ func GlobalHelp(full bool) {
 // to execute.
 func ParseCommand(args []string) {
 	var shortHelp bool
-	CommandGlobal.BoolVar(&shortHelp, "help", false,
+	Global.BoolVar(&shortHelp, "help", false,
 		"Print all subcommands")
 	var longHelp bool
-	CommandGlobal.BoolVar(&longHelp, "long-help", false,
+	Global.BoolVar(&longHelp, "long-help", false,
 		"Print full help for all subcommands")
 
-	if err := CommandGlobal.Parse(args[1:]); err != nil {
+	if err := Global.Parse(args[1:]); err != nil {
 		panic(err)
 	}
-	args = CommandGlobal.Args()
+	args = Global.Args()
 
 	if longHelp {
-		GlobalHelp(true)
+		Help(true)
 	}
 	if shortHelp || len(args) < 1 {
-		GlobalHelp(false)
+		Help(false)
 	}
 
-	if fs, ok := SubCommands[args[0]]; ok {
+	if fs, ok := Commands[args[0]]; ok {
 		fs.FlagSet().Parse(args[1:])
 		if err := fs.Run(fs.FlagSet().Args()); err != nil {
 			fmt.Println(err)
@@ -98,6 +98,6 @@ func ParseCommand(args []string) {
 		}
 	} else {
 		fmt.Printf("No such subcommand '%s'.\n", args[0])
-		GlobalHelp(false)
+		Help(false)
 	}
 }
