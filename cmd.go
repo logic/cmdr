@@ -68,6 +68,7 @@ func Help(full bool) {
 		pArgs := Commands[name].PositionalArguments()
 		if full {
 			fmt.Printf("\n%s - %s\n", name, Commands[name].Help())
+			Commands[name].FlagSet().PrintDefaults()
 			if pArgs != nil {
 				for _, arg := range pArgs {
 					out := "  " + arg.String()
@@ -83,9 +84,11 @@ func Help(full bool) {
 					fmt.Println(out)
 				}
 			}
-			Commands[name].FlagSet().PrintDefaults()
 		} else {
 			out := "  " + name
+			Commands[name].FlagSet().VisitAll(func(f *flag.Flag) {
+				out += " [-" + f.Name + "]"
+			})
 			if pArgs != nil {
 				for _, arg := range pArgs {
 					out += " " + arg.String()
@@ -98,6 +101,9 @@ func Help(full bool) {
 
 	if len(Variables) > 0 {
 		out := "\nEnvironment variables:"
+		if full {
+			out += "\n"
+		}
 		for name, action := range Variables {
 			out += "\n  " + name + "\n    \t" + action.Help()
 		}
