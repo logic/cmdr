@@ -13,8 +13,7 @@ func main() {
 	var timing bool
 	cmdr.Global.BoolVar(&timing, "timing", false, "Display timing data")
 
-	cmdr.ParseEnvironment()
-	cmdr.ParseCommand(os.Args)
+	cmdr.Parse(os.Args)
 
 	if timing {
 		after := time.Now()

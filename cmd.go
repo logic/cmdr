@@ -32,6 +32,7 @@ type Command interface {
 type Argument struct {
 	Name        string
 	Description string
+	DefValue    string
 	Optional    bool
 }
 
@@ -78,8 +79,18 @@ func Help(full bool) {
 						out += "\n    \t"
 					}
 					out += arg.Description
-					if !arg.Optional {
-						out += " (required)"
+					if !arg.Optional || arg.DefValue != "" {
+						out += " ("
+						if arg.DefValue != "" {
+							out += "default \"" + arg.DefValue + "\""
+						}
+						if !arg.Optional {
+							if arg.DefValue != "" {
+								out += ", "
+							}
+							out += "required"
+						}
+						out += ")"
 					}
 					fmt.Println(out)
 				}
@@ -87,7 +98,12 @@ func Help(full bool) {
 		} else {
 			out := "  " + name
 			Commands[name].FlagSet().VisitAll(func(f *flag.Flag) {
-				out += " [-" + f.Name + "]"
+				out += " [-" + f.Name
+				name, _ := flag.UnquoteUsage(f)
+				if name != "" {
+					out += " " + name
+				}
+				out += "]"
 			})
 			if pArgs != nil {
 				for _, arg := range pArgs {
@@ -112,13 +128,15 @@ func Help(full bool) {
 	os.Exit(1)
 }
 
-// ParseCommand takes a list of command-line arguments (typically os.Args),
-// parses the global arguments, then checks to see if there is a subcommand
-// to execute.
-func ParseCommand(args []string) {
+// Parse takes a list of command-line arguments (typically os.Args), parses the
+// global arguments, then checks to see if there is a subcommand to execute.
+func Parse(args []string) {
+	ParseEnvironment()
+
 	var shortHelp bool
 	Global.BoolVar(&shortHelp, "help", false,
 		"Print all subcommands")
+
 	var longHelp bool
 	Global.BoolVar(&longHelp, "long-help", false,
 		"Print full help for all subcommands")

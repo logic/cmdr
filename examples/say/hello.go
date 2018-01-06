@@ -25,7 +25,8 @@ func (cmd *cmdHello) PositionalArguments() []cmdr.Argument {
 	return []cmdr.Argument{
 		cmdr.Argument{
 			Name:        "target",
-			Description: "who do we say it to (default: world)",
+			Description: "who do we say it to",
+			DefValue:    "world",
 			Optional:    true,
 		},
 	}
