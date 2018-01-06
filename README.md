@@ -6,4 +6,4 @@ subcommands and environment variable triggers to command-line programs.
 
 [Documentation](https://godoc.org/github.com/logic/cmdr) |
 [Examples](https://github.com/logic/cmdr/tree/master/examples/) |
-[License](https://github.com/logic/cmdr/tree/mater/LICENSE)
+[License](https://github.com/logic/cmdr/tree/master/LICENSE)
