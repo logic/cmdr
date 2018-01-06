@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"text/tabwriter"
 )
 
 // Command defines a standard interface for retrieving a flagset for a
@@ -97,13 +96,12 @@ func Help(full bool) {
 		}
 	}
 
-	if len(Variables) != 0 {
-		fmt.Println("\nValid environment variables:")
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	if len(Variables) > 0 {
+		out := "\nEnvironment variables:"
 		for name, action := range Variables {
-			fmt.Fprintf(w, "  %s\t%s\t\n", name, action.Help())
+			out += "\n  " + name + "\n    \t" + action.Help()
 		}
-		w.Flush()
+		fmt.Println(out)
 	}
 	os.Exit(1)
 }
