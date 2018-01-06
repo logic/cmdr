@@ -21,6 +21,16 @@ func (cmd *cmdHello) Help() string {
 	return "Is it subcommands you're looking for?"
 }
 
+func (cmd *cmdHello) PositionalArguments() []cmdr.Argument {
+	return []cmdr.Argument{
+		cmdr.Argument{
+			Name:        "target",
+			Description: "who do we say it to (default: world)",
+			Optional:    true,
+		},
+	}
+}
+
 func (cmd *cmdHello) Run(args []string) error {
 	target := "world"
 	if len(args) > 0 {

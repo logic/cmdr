@@ -23,6 +23,24 @@ type Command interface {
 
 	// Help returns a one-line description of what this command does.
 	Help() string
+
+	// PositionalArguments returns an ordered array of any positional
+	// arguments that the command requires.
+	PositionalArguments() []Argument
+}
+
+// Argument defines a single positional argument
+type Argument struct {
+	Name        string
+	Description string
+	Optional    bool
+}
+
+func (arg *Argument) String() string {
+	if arg.Optional {
+		return fmt.Sprintf("[%s]", arg.Name)
+	}
+	return fmt.Sprintf("%s", arg.Name)
 }
 
 // Global is our global flagset.
@@ -48,11 +66,29 @@ func Help(full bool) {
 
 	fmt.Println("\nSubcommands:")
 	for _, name := range names {
+		pArgs := Commands[name].PositionalArguments()
 		if full {
 			fmt.Printf("\n%s - %s\n", name, Commands[name].Help())
+			if pArgs != nil {
+				for _, arg := range pArgs {
+					opt := ""
+					if !arg.Optional {
+						opt = " (required)"
+					}
+					fmt.Printf("  %s\n", arg.String())
+					fmt.Printf("    \t%s%s\n", arg.Description, opt)
+				}
+			}
 			Commands[name].FlagSet().PrintDefaults()
 		} else {
-			fmt.Printf("  %-10s %s\n", name, Commands[name].Help())
+			title := name
+			if pArgs != nil {
+				for _, arg := range pArgs {
+					title = fmt.Sprintf("%s %s", title, arg.String())
+				}
+			}
+			fmt.Printf("  %s\n", title)
+			fmt.Printf("    \t%s\n", Commands[name].Help())
 		}
 	}
 
