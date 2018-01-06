@@ -71,24 +71,29 @@ func Help(full bool) {
 			fmt.Printf("\n%s - %s\n", name, Commands[name].Help())
 			if pArgs != nil {
 				for _, arg := range pArgs {
-					opt := ""
-					if !arg.Optional {
-						opt = " (required)"
+					out := "  " + arg.String()
+					if len(out) < 4 {
+						out += "\t"
+					} else {
+						out += "\n    \t"
 					}
-					fmt.Printf("  %s\n", arg.String())
-					fmt.Printf("    \t%s%s\n", arg.Description, opt)
+					out += arg.Description
+					if !arg.Optional {
+						out += " (required)"
+					}
+					fmt.Println(out)
 				}
 			}
 			Commands[name].FlagSet().PrintDefaults()
 		} else {
-			title := name
+			out := "  " + name
 			if pArgs != nil {
 				for _, arg := range pArgs {
-					title = fmt.Sprintf("%s %s", title, arg.String())
+					out += " " + arg.String()
 				}
 			}
-			fmt.Printf("  %s\n", title)
-			fmt.Printf("    \t%s\n", Commands[name].Help())
+			out += "\n    \t" + Commands[name].Help()
+			fmt.Println(out)
 		}
 	}
 
