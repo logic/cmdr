@@ -3,7 +3,6 @@ package cmdr
 import (
 	"flag"
 	"fmt"
-	"os"
 	"sort"
 )
 
@@ -51,7 +50,7 @@ var Commands = map[string]Command{}
 
 // Help displays either a partial or full help text for our command
 // and all subcommands.
-func Help(full bool) {
+func Help(full bool) error {
 	flag.Usage()
 
 	names := make([]string, len(Commands))
@@ -125,21 +124,31 @@ func Help(full bool) {
 		}
 		fmt.Println(out)
 	}
-	os.Exit(1)
+
+	return nil
+}
+
+// ParsedCommand represents a post-parsed state for a command line.
+type ParsedCommand struct {
+	args []string
+	cmd  func([]string) error
+}
+
+// Run proxies to the Run() of the parsed command.
+func (pc *ParsedCommand) Run() error {
+	return pc.cmd(pc.args)
 }
 
 // Parse takes a list of command-line arguments (typically os.Args), parses the
 // global arguments, then checks to see if there is a subcommand to execute.
-func Parse(args []string) {
+func Parse(args []string) *ParsedCommand {
 	ParseEnvironment()
 
 	var shortHelp bool
-	Global.BoolVar(&shortHelp, "help", false,
-		"Print all subcommands")
+	Global.BoolVar(&shortHelp, "help", false, "display this help and exit")
 
 	var longHelp bool
-	Global.BoolVar(&longHelp, "long-help", false,
-		"Print full help for all subcommands")
+	Global.BoolVar(&longHelp, "long-help", false, "display long-form help and exit")
 
 	if err := Global.Parse(args[1:]); err != nil {
 		panic(err)
@@ -147,20 +156,32 @@ func Parse(args []string) {
 	args = Global.Args()
 
 	if longHelp {
-		Help(true)
+		return &ParsedCommand{
+			cmd: func(args []string) error {
+				return Help(true)
+			},
+		}
 	}
 	if shortHelp || len(args) < 1 {
-		Help(false)
+		return &ParsedCommand{
+			cmd: func(args []string) error {
+				return Help(false)
+			},
+		}
 	}
 
-	if fs, ok := Commands[args[0]]; ok {
-		fs.FlagSet().Parse(args[1:])
-		if err := fs.Run(fs.FlagSet().Args()); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+	if cmd, ok := Commands[args[0]]; ok {
+		fs := cmd.FlagSet()
+		fs.Parse(args[1:])
+		return &ParsedCommand{
+			args: fs.Args(),
+			cmd:  cmd.Run,
 		}
-	} else {
-		fmt.Printf("No such subcommand '%s'.\n", args[0])
-		Help(false)
+	}
+
+	return &ParsedCommand{
+		cmd: func(_ []string) error {
+			return fmt.Errorf("No such subcommand: %s", args[0])
+		},
 	}
 }
